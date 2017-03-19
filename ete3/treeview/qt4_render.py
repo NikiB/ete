@@ -376,6 +376,7 @@ def adjust_faces_to_tranformations(img, mainRect, n2i, n2f, tree_layers):
             for pos, fb in six.iteritems(faceblock):
                 fb.flip_hz()
 
+
 def add_legend(img, mainRect, parent):
     if img.legend:
         legend = _FaceGroupItem(img.legend, None)
@@ -398,6 +399,7 @@ def add_legend(img, mainRect, parent):
             pos = mainRect.bottomRight()
             legend.setPos(pos.x()-lg_w, pos.y())
             mainRect.adjust(0, 0, dw, lg_h)
+
 
 def add_title(img, mainRect, parent):
     if img.title:
@@ -410,64 +412,116 @@ def add_title(img, mainRect, parent):
         mainRect.adjust(0, -lg_h, dw, 0)
         title.setPos(mainRect.topLeft())
 
-def add_legend(img, mainRect, parent):
-    if img.legend:
-        legend = _FaceGroupItem(img.legend, None)
-        legend.setup_grid()
-        legend.render()
-        lg_w, lg_h = legend.get_size()
-        dw = max(0, lg_w-mainRect.width())
-        legend.setParentItem(parent)
-        if img.legend_position == 1:
-            mainRect.adjust(0, -lg_h, dw, 0)
-            legend.setPos(mainRect.topLeft())
-        elif img.legend_position == 2:
-            mainRect.adjust(0, -lg_h, dw, 0)
-            pos = mainRect.topRight()
-            legend.setPos(pos.x()-lg_w, pos.y())
-        elif img.legend_position == 3:
-            legend.setPos(mainRect.bottomLeft())
-            mainRect.adjust(0, 0, dw, lg_h)
-        elif img.legend_position == 4:
-            pos = mainRect.bottomRight()
-            legend.setPos(pos.x()-lg_w, pos.y())
-            mainRect.adjust(0, 0, dw, lg_h)
+
+# def add_scale(img, mainRect, parent):
+#     if img.show_scale:
+#         length=50
+#         scaleItem = _EmptyItem()
+#         customPen = QtGui.QPen(QtGui.QColor("black"), 1)
+#
+#         if img.force_topology:
+#             wtext = "Force topology is enabled!\nBranch lengths do not represent real values."
+#             warning_text = QtGui.QGraphicsSimpleTextItem(wtext)
+#             warning_text.setFont(QtGui.QFont("Arial", 8))
+#             warning_text.setBrush( QtGui.QBrush(QtGui.QColor("darkred")))
+#             warning_text.setPos(0, 32)
+#             warning_text.setParentItem(scaleItem)
+#         else:
+#             line = QtGui.QGraphicsLineItem(scaleItem)
+#             line2 = QtGui.QGraphicsLineItem(scaleItem)
+#             line3 = QtGui.QGraphicsLineItem(scaleItem)
+#             line.setPen(customPen)
+#             line2.setPen(customPen)
+#             line3.setPen(customPen)
+#
+#             line.setLine(0, 5, length, 5)
+#             line2.setLine(0, 0, 0, 10)
+#             line3.setLine(length, 0, length, 10)
+#             length_text = float(length) / img._scale if img._scale else 0.0
+#             scale_text = "%0.2f" % (length_text)
+#             scale = QtGui.QGraphicsSimpleTextItem(scale_text)
+#             scale.setParentItem(scaleItem)
+#             scale.setPos(0, 10)
+#
+#         scaleItem.setParentItem(parent)
+#         dw = max(0, length-mainRect.width())
+#         scaleItem.setPos(mainRect.bottomLeft())
+#         scaleItem.moveBy(img.margin_left, 0)
+#         mainRect.adjust(0, 0, dw, length)
+
 
 def add_scale(img, mainRect, parent):
-    if img.show_scale:
-        length=50
-        scaleItem = _EmptyItem()
-        customPen = QtGui.QPen(QtGui.QColor("black"), 1)
 
-        if img.force_topology:
-            wtext = "Force topology is enabled!\nBranch lengths do not represent real values."
-            warning_text = QtGui.QGraphicsSimpleTextItem(wtext)
-            warning_text.setFont(QtGui.QFont("Arial", 8))
-            warning_text.setBrush( QtGui.QBrush(QtGui.QColor("darkred")))
-            warning_text.setPos(0, 32)
-            warning_text.setParentItem(scaleItem)
+    if img.y_axis['show']:
+        if img.scale is None:
+            scale_length = img.y_axis['scale_length']
         else:
-            line = QtGui.QGraphicsLineItem(scaleItem)
-            line2 = QtGui.QGraphicsLineItem(scaleItem)
-            line3 = QtGui.QGraphicsLineItem(scaleItem)
-            line.setPen(customPen)
-            line2.setPen(customPen)
-            line3.setPen(customPen)
+            scale_length = img.y_axis['scale_length'] * img.scale
 
-            line.setLine(0, 5, length, 5)
-            line2.setLine(0, 0, 0, 10)
-            line3.setLine(length, 0, length, 10)
-            length_text = float(length) / img._scale if img._scale else 0.0
-            scale_text = "%0.2f" % (length_text)
-            scale = QtGui.QGraphicsSimpleTextItem(scale_text)
-            scale.setParentItem(scaleItem)
-            scale.setPos(0, 10)
+        scale_item = _EmptyItem()
+        custom_pen = QtGui.QPen(QtGui.QColor("black"), 1)
 
-        scaleItem.setParentItem(parent)
-        dw = max(0, length-mainRect.width())
-        scaleItem.setPos(mainRect.bottomLeft())
-        scaleItem.moveBy(img.margin_left, 0)
-        mainRect.adjust(0, 0, dw, length)
+        line = QtGui.QGraphicsLineItem(scale_item)
+        line.setPen(custom_pen)
+
+        if img.y_axis['scale_type'] == 'log':
+             calculate_marks = scale_length
+
+        elif img.y_axis['scale_type'] == 'linear':
+            calculate_marks = int(scale_length/10)
+
+        mark = {}
+        for x in range(calculate_marks+1):
+            mark[x] = QtGui.QGraphicsLineItem(scale_item)
+            mark[x].setPen(custom_pen)
+
+        if img.rotation == 0 or img.rotation == 180:
+            line.setLine(0, 5, scale_length, 5)
+        elif img.rotation == 90 or img.rotation == 270:
+            line.setLine(5, 0, 5, scale_length)
+
+        for x in range(calculate_marks):
+            if img.rotation == 0 or img.rotation == 180:
+                mark[x].setLine(x*10, 0, x*10, 5)
+            elif img.rotation == 90 or img.rotation == 270:
+                mark[x].setLine(0, x*10, 5, x*10)
+
+        if img.rotation == 0 or img.rotation == 180:
+            mark[calculate_marks].setLine(scale_length, 0, scale_length, 5)
+        elif img.rotation == 90 or img.rotation == 270:
+            mark[calculate_marks].setLine(0, scale_length, 5, scale_length)
+
+        length_text = float(scale_length) / img._scale if img._scale else 0.0
+        scale_text = "%0.2f" % (length_text)
+
+        font = QtGui.QFont('White Rabbit')
+        font.setPointSize(int(scale_length/5))
+        scale = QtGui.QGraphicsTextItem(scale_text)
+
+        scale.setFont(font)
+        # scale.setFlag(scale.ItemIgnoresTransformations, True)
+        scale.setParentItem(scale_item)
+        if img.rotation == 0 or img.rotation == 180:
+            scale.setPos(-5, 2)
+        elif img.rotation == 90 or img.rotation == 270:
+            scale.setPos(2, -5)
+
+        scale_item.setParentItem(parent)
+
+        x_pos = mainRect.topLeft().x()
+        y_pos = mainRect.topLeft().y()
+        if img.title:
+            title = _FaceGroupItem(img.title, None)
+            lg_w, lg_h = title.get_size()
+            root_pos = img.margin_top + lg_h
+        else:
+            root_pos = img.margin_top
+        mainRect.adjust(-20, 0, 0, 0)
+        scale_item.setPos(x_pos-10, y_pos+root_pos)
+        # scale_item.moveBy(img.margin_left, 5)
+        # img.y_axis['scale_min_value']
+        # img.y_axis['scale_max_value']
+
 
 def rotate_inverted_faces(n2i, n2f, img):
     for node, faceblock in six.iteritems(n2f):
@@ -475,6 +529,7 @@ def rotate_inverted_faces(n2i, n2f, img):
         if item.rotation > 90 and item.rotation < 270:
             for pos, fb in six.iteritems(faceblock):
                 fb.rotate(181)
+
 
 def render_backgrounds(img, mainRect, bg_layer, n2i, n2f):
 

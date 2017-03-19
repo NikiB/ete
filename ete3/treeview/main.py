@@ -526,6 +526,14 @@ class TreeStyle(object):
         # Draw the scale
         self.show_scale = True
 
+        # Draw Y_axis scale
+        self.y_axis = dict()
+        self.y_axis['show'] = False
+        self.y_axis['scale_min_value'] = None
+        self.y_axis['scale_max_value'] = None
+        self.y_axis['scale_type'] = None
+        self.y_axis['scale_length'] = None
+
         # Initialize aligned face headers
         self.aligned_header = FaceContainer()
         self.aligned_foot = FaceContainer()
